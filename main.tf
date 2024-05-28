@@ -100,7 +100,7 @@ resource "aws_instance" "jenkins_instance" {
     connection {
       type        = "ssh"
       user        = "ubuntu"
-      private_key = file("~/.ssh/aws-ssh.pem")
+      private_key = file(var.private_key_path)
       host        = aws_instance.jenkins_instance.public_ip
     }
   }
