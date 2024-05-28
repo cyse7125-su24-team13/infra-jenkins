@@ -28,6 +28,12 @@ variable "key_name" {
   type        = string
 }
 
+variable "private_key_path" {
+  description = "path to private key"
+  type        = string
+  default = "~/.ssh/test.pem"
+}
+
 # variable "domain_name" {
 #   description = "Domain name for the SSL certificate"
 #   type        = string
