@@ -15,7 +15,7 @@ variable "subnet_cidr" {
 
 variable "ami_id" {
   description = "AMI ID for the instance"
-  default     = "ami-073952711c9b20f93" # Replace with a default Ubuntu 20.04 LTS AMI ID
+  default     = "ami-09f0d8ab49ae0d9c9"
 }
 
 variable "instance_type" {
@@ -26,12 +26,13 @@ variable "instance_type" {
 variable "key_name" {
   description = "Key name for SSH access"
   type        = string
+  default     = "test"
 }
 
 variable "private_key_path" {
   description = "path to private key"
   type        = string
-  default = "~/.ssh/test.pem"
+  default     = "~/.ssh/test.pem"
 }
 
 # variable "domain_name" {

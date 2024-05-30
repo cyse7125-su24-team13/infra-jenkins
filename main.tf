@@ -1,5 +1,6 @@
 provider "aws" {
-  region = var.aws_region
+  region  = var.aws_region
+  profile = "root"
 }
 
 resource "aws_vpc" "jenkins_vpc" {
@@ -72,9 +73,6 @@ resource "aws_security_group" "jenkins_sg" {
   }
 }
 
-resource "aws_eip" "jenkins_eip" {
-  vpc = true
-}
 
 resource "aws_instance" "jenkins_instance" {
   ami                         = var.ami_id
@@ -88,14 +86,9 @@ resource "aws_instance" "jenkins_instance" {
     Name = "jenkins-instance"
   }
 
-  provisioner "remote-exec" {
-    inline = [
-      "sudo systemctl start jenkins",
-      "sudo systemctl enable jenkins",
-      "sudo systemctl start nginx",
-      "sudo systemctl enable nginx",
-      # "sudo certbot --nginx -d ${var.domain_name} --non-interactive --agree-tos -m ${var.email}"
-    ]
+  provisioner "file" {
+    source      = "scripts/setup.sh"
+    destination = "/tmp/setup.sh"
 
     connection {
       type        = "ssh"
@@ -104,11 +97,54 @@ resource "aws_instance" "jenkins_instance" {
       host        = aws_instance.jenkins_instance.public_ip
     }
   }
-  depends_on = [aws_security_group.jenkins_sg]
+
+  provisioner "remote-exec" {
+    script = "scripts/setup.sh"
+
+    connection {
+      type        = "ssh"
+      user        = "ubuntu"
+      private_key = file(var.private_key_path)
+      host        = aws_instance.jenkins_instance.public_ip
+    }
+  }
+
+  depends_on = [
+    aws_security_group.jenkins_sg
+  ]
+
 }
 
-resource "aws_eip_association" "jenkins_eip_assoc" {
+data "aws_eip" "existing_eip" {
+  filter {
+    name   = "tag:Name"
+    values = ["jenkins-elastic-ip"]
+  }
+}
+
+resource "aws_eip_association" "eip_assoc" {
   instance_id   = aws_instance.jenkins_instance.id
-  allocation_id = aws_eip.jenkins_eip.id
+  allocation_id = data.aws_eip.existing_eip.id
 }
 
+resource "null_resource" "run_certbot" {
+  triggers = {
+    instance_id = aws_instance.jenkins_instance.id
+    public_ip   = aws_instance.jenkins_instance.public_ip
+  }
+
+  depends_on = [aws_eip_association.eip_assoc]
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo certbot --nginx -d jenkins.rahhulganeesh.me --non-interactive --agree-tos -m vakiti.sai98@gmail.com --redirect --no-eff-email"
+    ]
+
+    connection {
+      type        = "ssh"
+      user        = "ubuntu"
+      private_key = file(var.private_key_path)
+      host        = data.aws_eip.existing_eip.public_ip
+    }
+  }
+}
