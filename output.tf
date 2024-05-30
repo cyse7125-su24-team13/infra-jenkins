@@ -15,5 +15,5 @@ output "jenkins_instance_public_ip" {
 }
 
 output "jenkins_eip" {
-  value = aws_eip.jenkins_eip.public_ip
+  value = data.aws_eip.existing_eip.public_ip
 }
