@@ -1,12 +1,12 @@
 provider "aws" {
   region  = var.aws_region
-  profile = "root"
+  profile = var.aws_profile
 }
 
 resource "aws_vpc" "jenkins_vpc" {
   cidr_block = var.vpc_cidr
   tags = {
-    Name = "jenkins-vpc"
+    Name = var.aws_vpc_tags_name
   }
 }
 
@@ -15,25 +15,25 @@ resource "aws_subnet" "jenkins_subnet" {
   cidr_block              = var.subnet_cidr
   map_public_ip_on_launch = true
   tags = {
-    Name = "jenkins-subnet"
+    Name = var.jenkins_subnet_tags
   }
 }
 
 resource "aws_internet_gateway" "jenkins_igw" {
   vpc_id = aws_vpc.jenkins_vpc.id
   tags = {
-    Name = "jenkins-igw"
+    Name = var.aws_internet_gateway_tags_name
   }
 }
 
 resource "aws_route_table" "jenkins_route_table" {
   vpc_id = aws_vpc.jenkins_vpc.id
   route {
-    cidr_block = "0.0.0.0/0"
+    cidr_block = var.aws_route_table_cidr_block
     gateway_id = aws_internet_gateway.jenkins_igw.id
   }
   tags = {
-    Name = "jenkins-route-table"
+    Name = var.aws_route_table_tags_name
   }
 }
 
@@ -45,31 +45,31 @@ resource "aws_route_table_association" "jenkins_route_table_assoc" {
 resource "aws_security_group" "jenkins_sg" {
   vpc_id = aws_vpc.jenkins_vpc.id
   ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = var.ingress_from_port
+    to_port     = var.ingress_to_port
+    protocol    = var.ingress_protocol
+    cidr_blocks = var.ingress_cidrblocks
   }
   ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = var.ingress1_from_port
+    to_port     = var.ingress1_to_port
+    protocol    = var.ingress1_protocol
+    cidr_blocks = var.ingress1_cidrblocks
   }
   ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = var.ingress2_from_port
+    to_port     = var.ingress2_to_port
+    protocol    = var.ingress2_protocol
+    cidr_blocks = var.ingress2_cidrblocks
   }
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = var.egress_from_port
+    to_port     = var.egress_to_port
+    protocol    = var.egress_protocol
+    cidr_blocks = var.egress_cidrblocks
   }
   tags = {
-    Name = "jenkins-sg"
+    Name = var.aws_security_group_tags
   }
 }
 
@@ -83,7 +83,7 @@ resource "aws_instance" "jenkins_instance" {
   associate_public_ip_address = true
 
   tags = {
-    Name = "jenkins-instance"
+    Name = var.aws_instance_tags
   }
 
   provisioner "file" {
@@ -92,7 +92,7 @@ resource "aws_instance" "jenkins_instance" {
 
     connection {
       type        = "ssh"
-      user        = "ubuntu"
+      user        = var.file_user
       private_key = file(var.private_key_path)
       host        = aws_instance.jenkins_instance.public_ip
     }
@@ -103,7 +103,7 @@ resource "aws_instance" "jenkins_instance" {
 
     connection {
       type        = "ssh"
-      user        = "ubuntu"
+      user        = var.remote-exec_user
       private_key = file(var.private_key_path)
       host        = aws_instance.jenkins_instance.public_ip
     }
@@ -117,8 +117,8 @@ resource "aws_instance" "jenkins_instance" {
 
 data "aws_eip" "existing_eip" {
   filter {
-    name   = "tag:Name"
-    values = ["jenkins-elastic-ip"]
+    name   = var.aws_eip_name
+    values = var.aws_eip_values
   }
 }
 
@@ -136,13 +136,11 @@ resource "null_resource" "run_certbot" {
   depends_on = [aws_eip_association.eip_assoc]
 
   provisioner "remote-exec" {
-    inline = [
-      "sudo certbot --nginx -d jenkins.rahhulganeesh.me --non-interactive --agree-tos -m vakiti.sai98@gmail.com --redirect --no-eff-email"
-    ]
+    inline = var.cert_bot_command
 
     connection {
       type        = "ssh"
-      user        = "ubuntu"
+      user        = var.remote-exec-user1
       private_key = file(var.private_key_path)
       host        = data.aws_eip.existing_eip.public_ip
     }
