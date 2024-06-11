@@ -1,9 +1,7 @@
 pipeline {
     agent any
     triggers {
-        githubPullRequest {
-            useGitHubHooks()
-        }
+        cron('* * * * *')
     }
     environment {
         TERRAFORM_VERSION = '1.7.3'
