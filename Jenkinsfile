@@ -1,37 +1,12 @@
 pipeline {
     agent any
     triggers {
-        // Poll for changes every minute
-        cron('* * * * *')
-    }
-    environment {
-        TERRAFORM_VERSION = '1.7.3'
+        useGitHubHooks()
     }
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
-            }
-        }
-        stage('Install Dependencies') {
-            steps {
-                script {
-                    // Install unzip
-                    sh 'sudo apt-get update && sudo apt-get install -y unzip'
-                }
-            }
-        }
-        stage('Set up Terraform') {
-            steps {
-                script {
-                    // Install Terraform
-                    sh """
-                    wget https://releases.hashicorp.com/terraform/${env.TERRAFORM_VERSION}/terraform_${env.TERRAFORM_VERSION}_linux_amd64.zip
-                    unzip terraform_${env.TERRAFORM_VERSION}_linux_amd64.zip
-                    sudo mv terraform /usr/local/bin/
-                    terraform -version
-                    """
-                }
             }
         }
         stage('Terraform Init') {
