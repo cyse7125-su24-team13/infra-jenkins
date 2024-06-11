@@ -33,3 +33,4 @@ terraform apply
 
 
 terraform destroy
+test
