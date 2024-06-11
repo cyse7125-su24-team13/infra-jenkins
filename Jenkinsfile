@@ -1,37 +1,39 @@
 pipeline {
     agent any
-
     triggers {
-        githubPullRequest()
+        githubPullRequest {
+            orgWhitelist('your-org')
+            allowMembersOfWhitelistedOrgsAsAdmin()
+        }
     }
-
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-
-        stage('Status Check') {
+        stage('Build') {
             steps {
-                script {
-                    // Example status check
-                    echo 'Performing status check...'
-                    // Add your status check logic here
-                    // For example, running tests or linting
-                    // sh 'make test'
-                }
+                // Add build steps here
+            }
+        }
+        stage('Test') {
+            steps {
+                // Add test steps here
+            }
+        }
+        stage('Deploy') {
+            steps {
+                // Add deployment steps here
             }
         }
     }
-
     post {
-        always {
-            script {
-                // Notify GitHub of the build result
-                def commitStatus = currentBuild.result == 'SUCCESS' ? 'success' : 'failure'
-                githubNotify context: 'PR Status Check', status: commitStatus, description: 'Jenkins build result'
-            }
+        success {
+            githubNotify context: 'Jenkins', description: 'Build successful', status: 'SUCCESS'
+        }
+        failure {
+            githubNotify context: 'Jenkins', description: 'Build failed', status: 'FAILURE'
         }
     }
 }
