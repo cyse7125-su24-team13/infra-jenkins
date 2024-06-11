@@ -22,14 +22,14 @@ pipeline {
             script {
                 def commitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
                 echo "Validation successful for commit ${commitSha}"
-                // Here you can add the appropriate notification step, e.g., GitHub Commit Status or other
+                githubNotify context: 'CI', status: 'SUCCESS', description: 'Build passed', targetUrl: "${env.BUILD_URL}"
             }
         }
         failure {
             script {
                 def commitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
                 echo "Validation failed for commit ${commitSha}"
-                // Here you can add the appropriate notification step, e.g., GitHub Commit Status or other
+                githubNotify context: 'CI', status: 'FAILURE', description: 'Build failed', targetUrl: "${env.BUILD_URL}"
             }
         }
     }
