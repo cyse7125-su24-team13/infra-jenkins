@@ -34,3 +34,4 @@ terraform apply
 
 terraform destroy
 test
+test2
