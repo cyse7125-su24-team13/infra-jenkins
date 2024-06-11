@@ -1,6 +1,7 @@
 pipeline {
     agent any
     triggers {
+        // Poll for changes every minute
         cron('* * * * *')
     }
     environment {
@@ -12,13 +13,20 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Install Dependencies') {
+            steps {
+                script {
+                    // Install unzip
+                    sh 'sudo apt-get update && sudo apt-get install -y unzip'
+                }
+            }
+        }
         stage('Set up Terraform') {
             steps {
                 script {
                     // Install Terraform
                     sh """
                     wget https://releases.hashicorp.com/terraform/${env.TERRAFORM_VERSION}/terraform_${env.TERRAFORM_VERSION}_linux_amd64.zip
-                    unzip terraform_${env.TERRAFORM_VERSION}_linux_amd64
                     unzip terraform_${env.TERRAFORM_VERSION}_linux_amd64.zip
                     sudo mv terraform /usr/local/bin/
                     terraform -version
@@ -41,13 +49,15 @@ pipeline {
         success {
             script {
                 def commitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-                githubNotify context: 'Terraform Validation', description: 'Validation successful', status: 'SUCCESS', sha: commitSha
+                echo "Validation successful for commit ${commitSha}"
+                // Here you can add the appropriate notification step, e.g., GitHub Commit Status or other
             }
         }
         failure {
             script {
                 def commitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-                githubNotify context: 'Terraform Validation', description: 'Validation failed', status: 'FAILURE', sha: commitSha
+                echo "Validation failed for commit ${commitSha}"
+                // Here you can add the appropriate notification step, e.g., GitHub Commit Status or other
             }
         }
     }
