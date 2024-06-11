@@ -2,9 +2,6 @@ pipeline {
     agent any
     triggers {
         githubPullRequest {
-            cron('* * * * *')
-            orgWhitelist('vakiti3010')
-            allowMembersOfWhitelistedOrgsAsAdmin()
             useGitHubHooks()
         }
     }
