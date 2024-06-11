@@ -2,8 +2,10 @@ pipeline {
     agent any
     triggers {
         githubPullRequest {
+            cron('* * * * *')
             orgWhitelist('your-org')
             allowMembersOfWhitelistedOrgsAsAdmin()
+            useGitHubHooks()
         }
     }
     stages {
@@ -14,26 +16,35 @@ pipeline {
         }
         stage('Build') {
             steps {
-                // Add build steps here
+                echo 'Building...'
+                // Add your build commands here
             }
         }
         stage('Test') {
             steps {
-                // Add test steps here
+                echo 'Testing...'
+                // Add your test commands here
             }
         }
         stage('Deploy') {
             steps {
-                // Add deployment steps here
+                echo 'Deploying...'
+                // Add your deployment commands here
             }
         }
     }
     post {
         success {
-            githubNotify context: 'Jenkins', description: 'Build successful', status: 'SUCCESS'
+            script {
+                def commitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+                githubNotify context: 'Jenkins', description: 'Build successful', status: 'SUCCESS', sha: commitSha
+            }
         }
         failure {
-            githubNotify context: 'Jenkins', description: 'Build failed', status: 'FAILURE'
+            script {
+                def commitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+                githubNotify context: 'Jenkins', description: 'Build failed', status: 'FAILURE', sha: commitSha
+            }
         }
     }
 }
