@@ -3,7 +3,7 @@ pipeline {
     triggers {
         githubPullRequest {
             cron('* * * * *')
-            orgWhitelist('your-org')
+            orgWhitelist('csye7125-su24-team13')
             allowMembersOfWhitelistedOrgsAsAdmin()
             useGitHubHooks()
         }
