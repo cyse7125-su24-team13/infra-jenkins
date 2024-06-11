@@ -1,7 +1,7 @@
 pipeline {
     agent any
     triggers {
-        useGitHubHooks()
+        githubPush()
     }
     stages {
         stage('Checkout') {
