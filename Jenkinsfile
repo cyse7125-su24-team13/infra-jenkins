@@ -1,6 +1,19 @@
 pipeline {
     agent any
+    triggers {
+        githubPullRequest {
+            cron('* * * * *')
+            orgWhitelist('your-org')
+            allowMembersOfWhitelistedOrgsAsAdmin()
+            useGitHubHooks()
+        }
+    }
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
         stage('Build') {
             steps {
                 echo 'Building...'
