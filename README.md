@@ -30,4 +30,6 @@ terraform apply
 
 
 # Destroy Infrastructure
+
+
 terraform destroy
