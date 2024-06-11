@@ -8,28 +8,37 @@ pipeline {
             useGitHubHooks()
         }
     }
+    environment {
+        TERRAFORM_VERSION = '1.7.3'
+    }
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-        stage('Build') {
+        stage('Set up Terraform') {
             steps {
-                echo 'Building...'
-                // Add your build commands here
+                script {
+                    // Install Terraform
+                    sh """
+                    wget https://releases.hashicorp.com/terraform/${env.TERRAFORM_VERSION}/terraform_${env.TERRAFORM_VERSION}_linux_amd64.zip
+                    unzip terraform_${env.TERRAFORM_VERSION}_linux_amd64
+                    unzip terraform_${env.TERRAFORM_VERSION}_linux_amd64.zip
+                    sudo mv terraform /usr/local/bin/
+                    terraform -version
+                    """
+                }
             }
         }
-        stage('Test') {
+        stage('Terraform Init') {
             steps {
-                echo 'Testing...'
-                // Add your test commands here
+                sh 'terraform init'
             }
         }
-        stage('Deploy') {
+        stage('Terraform Validate') {
             steps {
-                echo 'Deploying...'
-                // Add your deployment commands here
+                sh 'terraform validate'
             }
         }
     }
@@ -37,13 +46,13 @@ pipeline {
         success {
             script {
                 def commitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-                githubNotify context: 'Jenkins', description: 'Build successful', status: 'SUCCESS', sha: commitSha
+                githubNotify context: 'Terraform Validation', description: 'Validation successful', status: 'SUCCESS', sha: commitSha
             }
         }
         failure {
             script {
                 def commitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-                githubNotify context: 'Jenkins', description: 'Build failed', status: 'FAILURE', sha: commitSha
+                githubNotify context: 'Terraform Validation', description: 'Validation failed', status: 'FAILURE', sha: commitSha
             }
         }
     }
